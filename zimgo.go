@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -151,3 +152,61 @@ func (zf *ZimFile) Close() error {
 	}
 	return nil
 }
+
+func SetupRouter(zim *ZimFile) *gin.Engine {
+	r := gin.Default()
+
+	// Serve the HTML template with a form for uploading .zim files
+	r.GET("/", func(c *gin.Context) {
+		c.HTML(200, "index.html", gin.H{})
+	})
+
+	// Handle file upload
+	r.POST("/upload", func(c *gin.Context) {
+		file, err := c.FormFile("file")
+		if err != nil {
+			c.String(400, "Bad Request")
+			return
+		}
+
+		// Save the uploaded file to a temporary directory
+		tempPath := "temp"
+		err = os.MkdirAll(tempPath, os.ModePerm)
+		if err != nil {
+			c.String(500, "Internal Server Error")
+			return
+		}
+
+		uploadPath := filepath.Join(tempPath, file.Filename)
+		err = c.SaveUploadedFile(file, uploadPath)
+		if err != nil {
+			c.String(500, "Internal Server Error")
+			return
+		}
+
+		// Open and extract the .zim file
+		z, err := Open(uploadPath)
+		if err != nil {
+			c.String(500, "Internal Server Error")
+			return
+		}
+		defer z.Close()
+
+		// Extract to a destination directory
+		destPath := "uploads"
+		err = z.Extract(destPath)
+		if err != nil {
+			c.String(500, "Internal Server Error")
+			return
+		}
+
+		// Render a simple success message
+		c.String(200, "File uploaded and extracted successfully!")
+	})
+
+	// Serve static files (extracted .zim contents)
+	r.Static("/uploads", "./uploads")
+
+	return r
+}
+
