@@ -1,0 +1,18 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zim File Uploader</title>
+</head>
+<body>
+    <h1>Zim File Uploader</h1>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <label for="file">Choose a .zim file:</label>
+        <input type="file" name="file" id="file" accept=".zim">
+        <br>
+        <button type="submit">Upload</button>
+    </form>
+</body>
+</html>
